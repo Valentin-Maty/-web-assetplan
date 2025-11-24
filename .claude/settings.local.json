@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app:*)",
+      "Bash(mkdir:*)",
+      "WebFetch(domain:docs.google.com)",
+      "WebFetch(domain:doc-04-18-sheets.googleusercontent.com)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

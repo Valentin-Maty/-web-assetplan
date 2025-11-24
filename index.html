@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TuMatch Inmobiliario - Propiedades</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0F1425 0%, #1A1F3A 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .background-effects {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .floating-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            top: 10%;
+            left: 20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 107, 107, 0.2);
+        }
+
+        .orb-2 {
+            bottom: 10%;
+            right: 20%;
+            width: 350px;
+            height: 350px;
+            background: rgba(138, 43, 226, 0.2);
+            animation-delay: 2s;
+        }
+
+        .orb-3 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 20, 147, 0.15);
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-30px) scale(1.05);
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            padding: 40px 0;
+            text-align: center;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 50%, #8A2BE2 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(255, 107, 107, 0.3);
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            inset: -15px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 50%, #8A2BE2 100%);
+            border-radius: 15px;
+            filter: blur(20px);
+            opacity: 0.5;
+            z-index: -1;
+        }
+
+        .logo-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        .logo-text h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            font-size: 0.9rem;
+            letter-spacing: 0.3em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .header-title {
+            margin-top: 30px;
+        }
+
+        .header-title h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header-title p {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 100px 0;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 20px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #FF6B6B;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 1s ease;
+        }
+
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            padding-bottom: 50px;
+        }
+
+        .property-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .property-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 20, 147, 0.05) 50%, rgba(138, 43, 226, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .property-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(255, 107, 107, 0.2);
+        }
+
+        .property-card:hover::before {
+            opacity: 1;
+        }
+
+        .property-card-simple {
+            padding: 25px;
+            text-align: center;
+        }
+
+        .property-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        .property-code-large {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .property-price-large {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .property-bono-large {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6347 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);
+            padding: 15px;
+            border: 2px solid #FFD700;
+            border-radius: 15px;
+            background-color: rgba(255, 215, 0, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+                transform: scale(1);
+            }
+            100% {
+                box-shadow: 0 12px 40px rgba(255, 215, 0, 0.5);
+                transform: scale(1.02);
+            }
+        }
+
+        .btn-details-large {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.8) 0%, rgba(255, 20, 147, 0.8) 50%, rgba(138, 43, 226, 0.8) 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-details-large:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1A1F3A 0%, #0F1425 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: white;
+        }
+
+        .property-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .property-detail-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .property-detail-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 5px;
+        }
+
+        .property-detail-value {
+            font-size: 1rem;
+            color: white;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .property-link {
+            color: #4FC3F7;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(79, 195, 247, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: rgba(79, 195, 247, 0.1);
+            display: inline-block;
+            margin: 2px 0;
+        }
+
+        .property-link:hover {
+            color: #81D4FA;
+            background: rgba(79, 195, 247, 0.2);
+            border-bottom-color: rgba(129, 212, 250, 0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(79, 195, 247, 0.3);
+        }
+
+        .filters-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .filters-title {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .filter-group {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-group::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #FF6B6B, #FF1493, #8A2BE2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .filter-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(255, 107, 107, 0.15);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .filter-group:hover::before {
+            opacity: 1;
+        }
+
+        .filter-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+        }
+
+        .filter-input, .filter-select {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: white;
+            padding: 14px 16px;
+            font-size: 0.95rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .filter-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #FF6B6B;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-select {
+            cursor: pointer;
+        }
+
+        .filter-select option {
+            background: #1A1F3A;
+            color: white;
+            padding: 10px;
+        }
+
+        .filters-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .clear-filters-btn {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 20, 147, 0.2) 100%);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 12px;
+            color: white;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(15px);
+        }
+
+        .clear-filters-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.4) 0%, rgba(255, 20, 147, 0.4) 100%);
+            border-color: #FF6B6B;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .range-container {
+            width: 100%;
+        }
+
+        .range-values {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #FF6B6B;
+            font-weight: 600;
+        }
+
+        .dual-range {
+            position: relative;
+            height: 40px;
+        }
+
+        .range-slider {
+            position: absolute;
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.4);
+            border: 2px solid white;
+        }
+
+        .range-slider::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.4);
+            border: 2px solid white;
+        }
+
+        .range-slider::-webkit-slider-track {
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .range-slider::-moz-range-track {
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .toggle-filter-btn {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 20, 147, 0.2) 100%);
+            border: 1px solid rgba(255, 107, 107, 0.4);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: 15px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(15px);
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-filter-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.4) 0%, rgba(255, 20, 147, 0.4) 100%);
+            border-color: rgba(255, 107, 107, 0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            color: white;
+        }
+
+        .toggle-filter-btn.active {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
+            border-color: #FF1493;
+            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.5);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .filter-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .manual-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .filter-input-small {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            backdrop-filter: blur(15px);
+            transition: all 0.3s ease;
+            flex: 1;
+            font-family: inherit;
+            min-width: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-input-small::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            font-style: normal;
+            font-weight: 400;
+        }
+
+        .filter-input-small:focus {
+            outline: none;
+            border-color: #FF6B6B;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .filter-input-small:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-separator {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 0 6px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        #bonoManualFilter, #precioManualFilter {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .property-header {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 50%, #8A2BE2 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .property-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .property-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .property-icon svg {
+            width: 35px;
+            height: 35px;
+            fill: white;
+        }
+
+        .bono-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .property-info {
+            position: absolute;
+            bottom: 10px;
+            left: 15px;
+            right: 15px;
+            text-align: center;
+            z-index: 2;
+        }
+
+        .property-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 3px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .property-info p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .property-content {
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .property-type {
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .property-features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .feature-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 5px;
+        }
+
+        .feature-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .property-description {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .property-location {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .btn-details {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.8) 0%, rgba(255, 20, 147, 0.8) 50%, rgba(138, 43, 226, 0.8) 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .btn-details:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #ff6b6b;
+        }
+
+        /* Estilos para Modal de Condiciones Rediseñado */
+        .conditions-modal {
+            z-index: 2000;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .conditions-content {
+            max-width: 1000px;
+            max-height: 85vh;
+            width: 90%;
+            background: linear-gradient(145deg, rgba(20, 25, 40, 0.95) 0%, rgba(15, 20, 35, 0.98) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+        }
+
+        .conditions-header {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.9) 0%, rgba(255, 20, 147, 0.9) 50%, rgba(138, 43, 226, 0.9) 100%);
+            color: white;
+            padding: 25px 30px;
+            position: relative;
+            text-align: left;
+        }
+
+        .conditions-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M20 20.5V18H18v2.5h-2.5V22H18v2.5h2V22h2.5v-1.5H20zM0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41L37.17 4.24 35.76 2.83 38.59 0H40v1.41z'/%3E%3C/g%3E%3C/svg%3E") repeat;
+        }
+
+        .conditions-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .conditions-body {
+            padding: 35px;
+            max-height: 60vh;
+            overflow-y: auto;
+            background: transparent;
+            color: white;
+            line-height: 1.9;
+            font-size: 1.25rem;
+        }
+
+        .conditions-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .conditions-body::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .conditions-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #FF6B6B, #FF1493);
+            border-radius: 4px;
+        }
+
+        .conditions-body p:first-child {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 12px;
+            border-left: 4px solid #FF6B6B;
+            font-weight: 500;
+            line-height: 1.8;
+        }
+
+        .conditions-text {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .condition-item {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .condition-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(135deg, #FF6B6B, #FF1493);
+            border-radius: 0 2px 2px 0;
+        }
+
+        .condition-item:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
+            border-color: rgba(255, 107, 107, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.15);
+        }
+
+        .condition-item strong {
+            color: #FF6B6B;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-right: 15px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .loading-conditions {
+            text-align: center;
+            padding: 60px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .conditions-footer {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .accept-conditions-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 50%, #2E7D32 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            padding: 16px 35px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .accept-conditions-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .accept-conditions-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(76, 175, 80, 0.5);
+            background: linear-gradient(135deg, #45a049 0%, #4CAF50 50%, #66BB6A 100%);
+        }
+
+        .accept-conditions-btn:hover::before {
+            opacity: 1;
+        }
+
+        .accept-conditions-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .floating-conditions-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, rgba(30, 30, 50, 0.95) 0%, rgba(40, 40, 60, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            padding: 12px 18px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 200px;
+        }
+
+        .floating-conditions-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, rgba(40, 40, 60, 0.95) 0%, rgba(50, 50, 70, 0.95) 100%);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .floating-conditions-btn::before {
+            content: "📋";
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .properties-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo-container {
+                flex-direction: column;
+            }
+
+            .conditions-content {
+                width: 95%;
+                max-width: 95%;
+                margin: 15px auto;
+                max-height: 95vh;
+            }
+
+            .conditions-body {
+                padding: 25px;
+                max-height: 70vh;
+                font-size: 1.1rem;
+                line-height: 1.7;
+            }
+
+            .condition-item {
+                padding: 25px;
+                font-size: 1.05rem;
+            }
+
+            .condition-item strong {
+                font-size: 1.2rem;
+            }
+
+            .conditions-body p:first-child {
+                font-size: 1.1rem;
+                padding: 18px;
+            }
+
+            .floating-conditions-btn {
+                bottom: 20px;
+                left: 20px;
+                padding: 10px 15px;
+                font-size: 0.8rem;
+                max-width: 160px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-effects">
+        <div class="floating-orb orb-1"></div>
+        <div class="floating-orb orb-2"></div>
+        <div class="floating-orb orb-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>TUMATCH</h1>
+                    <p>INMOBILIARIO</p>
+                </div>
+            </div>
+            <div class="header-title">
+                <h2>Encuentra tu Propiedad Ideal</h2>
+                <p>Descubre las mejores oportunidades inmobiliarias</p>
+            </div>
+        </header>
+
+        <main>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Cargando propiedades...</p>
+            </div>
+
+            <div id="content" style="display: none;">
+
+                <!-- Filtros Mejorados -->
+                <div class="filters-container">
+                    <div class="filters-title">🔍 Filtros de Búsqueda</div>
+                    
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                💰 Filtro de Bono
+                                <button id="toggleBonoFilter" class="toggle-filter-btn" onclick="toggleBonoFilterType()">📝 Manual</button>
+                            </label>
+                            <div id="bonoRangeFilter">
+                                <select id="filterBono" class="filter-select">
+                                    <option value="">Cualquier bono</option>
+                                </select>
+                            </div>
+                            <div id="bonoManualFilter" style="display: none;">
+                                <div class="manual-filter-row">
+                                    <input type="text" id="filterBonoMin" class="filter-input-small" placeholder="Mínimo">
+                                    <span class="filter-separator">-</span>
+                                    <input type="text" id="filterBonoMax" class="filter-input-small" placeholder="Máximo">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                🏠 Filtro de Precio (UF)
+                                <button id="togglePrecioFilter" class="toggle-filter-btn" onclick="togglePrecioFilterType()">📝 Manual</button>
+                            </label>
+                            <div id="precioRangeFilter">
+                                <select id="filterPrecio" class="filter-select">
+                                    <option value="">Cualquier precio</option>
+                                </select>
+                            </div>
+                            <div id="precioManualFilter" style="display: none;">
+                                <div class="manual-filter-row">
+                                    <input type="text" id="filterPrecioMin" class="filter-input-small" placeholder="Mín UF">
+                                    <span class="filter-separator">-</span>
+                                    <input type="text" id="filterPrecioMax" class="filter-input-small" placeholder="Máx UF">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                📍 Comuna
+                            </label>
+                            <select id="filterUbicacion" class="filter-select">
+                                <option value="">Todas las comunas</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                🏢 Tipología
+                            </label>
+                            <select id="filterTipologia" class="filter-select">
+                                <option value="">Todas las tipologías</option>
+                            </select>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="filters-actions">
+                        <button class="clear-filters-btn" onclick="clearAllFilters()">
+                            🔄 Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+
+                <div id="properties-grid" class="properties-grid"></div>
+            </div>
+
+            <!-- Modal para detalles -->
+            <div id="propertyModal" class="modal">
+                <div class="modal-content">
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                    <div class="modal-header">
+                        <h2 id="modalTitle" style="color: white; margin-bottom: 10px;">Detalles de la Propiedad</h2>
+                        <div id="modalSubtitle" style="color: rgba(255,255,255,0.7); font-size: 1.1rem;"></div>
+                    </div>
+                    <div id="modalContent"></div>
+                </div>
+            </div>
+
+            <div id="error" class="error" style="display: none;">
+                <p>Error al cargar las propiedades. Por favor, intenta de nuevo.</p>
+                <button onclick="loadProperties()" style="margin-top: 20px; padding: 10px 20px; background: linear-gradient(135deg, #FF6B6B, #FF1493); border: none; border-radius: 8px; color: white; cursor: pointer;">
+                    Reintentar
+                </button>
+            </div>
+
+            <!-- Modal de Condiciones -->
+            <div id="condicionesModal" class="modal conditions-modal">
+                <div class="modal-content conditions-content">
+                    <div class="conditions-header">
+                        <h2>📋 Condiciones y Términos</h2>
+                        <button class="modal-close" onclick="closeCondicionesModal()">&times;</button>
+                    </div>
+                    <div id="condicionesContent" class="conditions-body">
+                        <div class="loading-conditions">
+                            <div class="spinner"></div>
+                            <p>Cargando condiciones...</p>
+                        </div>
+                    </div>
+                    <div class="conditions-footer">
+                        <button class="accept-conditions-btn" onclick="acceptConditions()">
+                            ✅ He leído y acepto las condiciones
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón flotante para ver condiciones -->
+            <button id="condicionesBtn" class="floating-conditions-btn" onclick="showCondicionesModal()" style="display: none;">
+                Ver Condiciones
+            </button>
+        </main>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1iF8PuF84cUNPZ3GM50guWsLwwp-slUZNbP0MWtaEPFM';
+        
+        // Usar URL pública directa para CSV
+        async function loadSheetData() {
+            try {
+                console.log('Iniciando carga de datos...');
+                
+                // URLs directas para CSV con GIDs correctos
+                const propsUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=0`;
+                // GID correcto para la hoja Bonos
+                const possibleBonosGids = ['725527455', '844593896', '1887029569', '1', '2', '3'];
+                let bonosUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${possibleBonosGids[0]}`;
+                
+                console.log('Cargando datos de propiedades...');
+                const propsResponse = await fetch(propsUrl);
+                
+                if (!propsResponse.ok) {
+                    throw new Error(`Error cargando propiedades: ${propsResponse.status}`);
+                }
+                
+                const propsText = await propsResponse.text();
+                console.log('Datos de propiedades recibidos, primeras líneas:', propsText.substring(0, 200));
+                
+                console.log('Cargando datos de bonos...');
+                let bonosText = '';
+                let bonosLoaded = false;
+                
+                // Intentar múltiples GIDs para la hoja Bonos
+                for (let i = 0; i < possibleBonosGids.length; i++) {
+                    const gid = possibleBonosGids[i];
+                    const testBonosUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gid}`;
+                    
+                    try {
+                        console.log(`Intentando GID ${gid} para Bonos...`);
+                        const bonosResponse = await fetch(testBonosUrl);
+                        
+                        if (bonosResponse.ok) {
+                            bonosText = await bonosResponse.text();
+                            console.log(`✅ Éxito con GID ${gid} - Primeras líneas:`, bonosText.substring(0, 150));
+                            
+                            // Verificar que contiene datos válidos (al menos 2 líneas)
+                            if (bonosText.split('\n').length > 1) {
+                                bonosLoaded = true;
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        console.log(`❌ Falló GID ${gid}:`, e.message);
+                    }
+                }
+                
+                if (!bonosLoaded) {
+                    throw new Error('No se pudo cargar la hoja Bonos con ningún GID');
+                }
+                
+                return { 
+                    propsData: parseCSV(propsText), 
+                    bonosData: parseCSV(bonosText) 
+                };
+                
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                throw error;
+            }
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim());
+            const result = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const row = parseCSVLine(lines[i]);
+                result.push(row);
+            }
+            
+            return result;
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextChar = line[i + 1];
+                
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim().replace(/^"|"$/g, ''));
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim().replace(/^"|"$/g, ''));
+            return result;
+        }
+
+        // Datos de ejemplo mientras solucionamos la conexión
+        function getMockData() {
+            const propsData = [
+                ['Código', 'Nombre', 'Dirección', 'Ciudad', 'Tipo', 'Habitaciones', 'Baños', 'Área', 'Precio', 'Descripción'],
+                ['PROP001', 'Casa en Las Condes', 'Los Leones 1234', 'Las Condes', 'Casa', '4', '3', '180', '150000000', 'Hermosa casa con jardín'],
+                ['PROP002', 'Departamento Centro', 'Moneda 890', 'Santiago Centro', 'Departamento', '2', '2', '85', '95000000', 'Moderno departamento'],
+                ['PROP003', 'Casa Providencia', 'Manuel Montt 456', 'Providencia', 'Casa', '3', '2', '120', '120000000', 'Casa remodelada'],
+                ['PROP004', 'Oficina Las Condes', 'Apoquindo 3000', 'Las Condes', 'Oficina', '0', '2', '65', '80000000', 'Oficina equipada'],
+                ['PROP005', 'Departamento Ñuñoa', 'Irarrázaval 2500', 'Ñuñoa', 'Departamento', '3', '2', '95', '110000000', 'Excelente ubicación']
+            ];
+            
+            const bonosData = [
+                ['Código', 'Info1', 'Info2', 'Info3', 'Bono', 'Info5', 'Orden'],
+                ['PROP001', '', '', '', '5000000', '', '95'],
+                ['PROP002', '', '', '', '3000000', '', '88'],
+                ['PROP003', '', '', '', '4500000', '', '92'],
+                ['PROP004', '', '', '', '2500000', '', '85'],
+                ['PROP005', '', '', '', '3800000', '', '90']
+            ];
+            
+            return { propsData, bonosData };
+        }
+
+        async function loadProperties() {
+            const loadingEl = document.getElementById('loading');
+            const contentEl = document.getElementById('content');
+            const errorEl = document.getElementById('error');
+            const gridEl = document.getElementById('properties-grid');
+            
+            loadingEl.style.display = 'block';
+            contentEl.style.display = 'none';
+            errorEl.style.display = 'none';
+            
+            try {
+                console.log('Intentando cargar datos de Google Sheets...');
+                let propsData, bonosData;
+                
+                try {
+                    const sheetsData = await loadSheetData();
+                    propsData = sheetsData.propsData;
+                    bonosData = sheetsData.bonosData;
+                    console.log('Datos cargados desde Google Sheets');
+                } catch (sheetsError) {
+                    console.warn('Error cargando desde Google Sheets, usando datos de ejemplo:', sheetsError.message);
+                    const mockData = getMockData();
+                    propsData = mockData.propsData;
+                    bonosData = mockData.bonosData;
+                    
+                    // Mostrar aviso de datos de ejemplo en consola
+                    console.warn('⚠️ Mostrando datos de ejemplo - No se pudieron cargar los datos de Google Sheets');
+                }
+                
+                console.log(`Propiedades cargadas: ${propsData.length} filas`);
+                console.log(`Bonos cargados: ${bonosData.length} filas`);
+                
+                if (propsData.length < 2 || bonosData.length < 2) {
+                    throw new Error('No hay suficientes datos en las hojas');
+                }
+                
+                // Procesar bonos (saltar header en fila 0)
+                const bonosMap = new Map();
+                console.log('Procesando hoja Bonos...');
+                console.log('Header Bonos:', bonosData[0]);
+                
+                for (let i = 1; i < bonosData.length; i++) {
+                    const row = bonosData[i];
+                    if (!row || row.length < 7) continue;
+                    
+                    const codigo = row[0]; // Columna A
+                    const precio = parseFloat(row[1]?.toString().replace(/[^0-9.-]/g, '')) || 0; // Columna B - precio
+                    const bono = parseFloat(row[4]?.toString().replace(/[^0-9.-]/g, '')) || 0; // Columna E - bono
+                    const orden = parseFloat(row[6]?.toString().replace(/[^0-9.-]/g, '')) || 0; // Columna G, limpiar formato
+                    
+                    if (codigo && codigo.trim()) {
+                        bonosMap.set(codigo.trim(), { precio, bono, orden });
+                        if (i < 5) { // Solo mostrar los primeros 5 para debug
+                            console.log(`Bono fila ${i}: Código=${codigo.trim()}, B="${row[1]}"→${precio}, E="${row[4]}"→${bono}, G="${row[6]}"→${orden}`);
+                        }
+                    }
+                }
+                
+                console.log(`Total bonos procesados: ${bonosMap.size}`);
+                
+                // Procesar propiedades (saltar header en fila 0)
+                const properties = [];
+                console.log('Procesando hoja Total de propiedades...');
+                console.log('Header Propiedades:', propsData[0]);
+                
+                for (let i = 1; i < propsData.length; i++) {
+                    const row = propsData[i];
+                    if (!row || !row[0]) continue; // Saltar si no hay código
+                    
+                    const codigo = row[0].toString().trim(); // Columna A
+                    const bonoInfo = bonosMap.get(codigo);
+                    
+                    // Solo incluir propiedades con bono
+                    if (!bonoInfo) {
+                        if (i < 10) console.log(`Propiedad ${codigo} sin bono, omitiendo`);
+                        continue;
+                    }
+                    
+                    // Usar el precio de la hoja Bonos (columna B)
+                    const precioFinal = bonoInfo.precio || 0;
+                    
+                    const property = {
+                        id: codigo,
+                        codigo: codigo,
+                        precio: precioFinal, // Precio de columna B de hoja Bonos
+                        bono: bonoInfo.bono,
+                        ordenBono: bonoInfo.orden,
+                        // Todos los datos de la hoja Total de propiedades (excluyendo AE, AG, AJ)
+                        allData: {}
+                    };
+                    
+                    // Agregar todos los datos de las columnas (excepto AE=30, AG=32, AJ=35)
+                    const excludedColumns = [30, 32, 35]; // AE, AG, AJ
+                    for (let colIndex = 0; colIndex < row.length; colIndex++) {
+                        if (!excludedColumns.includes(colIndex) && row[colIndex]) {
+                            const columnLetter = String.fromCharCode(65 + colIndex);
+                            property.allData[columnLetter] = row[colIndex];
+                        }
+                    }
+                    
+                    if (i < 3) { // Solo mostrar las primeras 3 para debug
+                        console.log(`Propiedad ${codigo} (fila ${i}):`);
+                        console.log(`  - Precio Final usado: $${precioFinal.toLocaleString()}`);
+                        console.log(`  - Bono: $${bonoInfo.bono.toLocaleString()}, Orden: ${bonoInfo.orden}`);
+                    }
+                    
+                    properties.push(property);
+                    console.log(`Propiedad agregada: ${codigo} - ${property.nombre}`);
+                }
+                
+                // Ordenar por columna G (orden bono) de mayor a menor
+                console.log('Antes de ordenar - primeras 5 propiedades:');
+                properties.slice(0, 5).forEach(p => {
+                    console.log(`  ${p.codigo}: Orden=${p.ordenBono}, Bono=$${p.bono}`);
+                });
+                
+                properties.sort((a, b) => b.ordenBono - a.ordenBono);
+                
+                console.log('Después de ordenar - primeras 10 propiedades:');
+                properties.slice(0, 10).forEach((p, index) => {
+                    console.log(`  ${index + 1}. ${p.codigo}: Orden=${p.ordenBono}, Bono=$${p.bono}, Precio=${p.precio} UF`);
+                });
+                
+                // Verificar que el ordenamiento esté correcto
+                let ordenIncorrecto = false;
+                for (let i = 1; i < properties.length; i++) {
+                    if (properties[i-1].ordenBono < properties[i].ordenBono) {
+                        console.error(`❌ ERROR DE ORDENAMIENTO: Posición ${i-1} (${properties[i-1].ordenBono}) < Posición ${i} (${properties[i].ordenBono})`);
+                        ordenIncorrecto = true;
+                        break;
+                    }
+                }
+                if (!ordenIncorrecto) {
+                    console.log('✅ Ordenamiento correcto: Mayor a menor por columna G');
+                }
+                
+                console.log(`Total propiedades a mostrar: ${properties.length}`);
+                
+                // Almacenar todas las propiedades
+                allProperties = properties;
+                filteredProperties = [...allProperties];
+                
+                
+                // Configurar filtros
+                populateFilterOptions();
+                setupFilterListeners();
+                
+                // Mostrar propiedades
+                displayProperties(filteredProperties);
+                
+                // Mostrar contenido
+                loadingEl.style.display = 'none';
+                contentEl.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        function createPropertyCard(property, index) {
+            const card = document.createElement('div');
+            card.className = 'property-card';
+            card.style.animationDelay = `${index * 0.05}s`;
+            
+            // Diseño simplificado centrado en código, precio y bono
+            card.innerHTML = `
+                <div class="property-card-simple">
+                    <div class="property-label">CODIGO PROPIEDAD</div>
+                    <div class="property-code-large">${property.codigo}</div>
+                    
+                    <div class="property-label">PRECIO PROPIEDAD (UF)</div>
+                    <div class="property-price-large">${Math.round(property.precio || 0).toLocaleString()} UF</div>
+                    
+                    <div class="property-label">BONO DISPONIBLE</div>
+                    <div class="property-bono-large">$${Math.round(property.bono || 0).toLocaleString()}</div>
+                    
+                    <button class="btn-details-large" onclick="showPropertyDetails('${property.id}')">
+                        Ver Detalles
+                    </button>
+                </div>
+            `;
+            
+            // Almacenar datos en el elemento para acceso posterior
+            card.propertyData = property;
+            
+            return card;
+        }
+
+        // Funciones para el modal
+        function showPropertyDetails(propertyId) {
+            const propertyCard = [...document.querySelectorAll('.property-card')]
+                .find(card => card.propertyData?.id === propertyId);
+            
+            if (!propertyCard) return;
+            
+            const property = propertyCard.propertyData;
+            
+            // Actualizar título del modal
+            document.getElementById('modalTitle').textContent = property.codigo;
+            document.getElementById('modalSubtitle').innerHTML = `
+                <div style="font-size: 1.5rem; margin-bottom: 10px;">${Math.round(property.precio).toLocaleString()} UF</div>
+                <div style="color: #FFD700;">Bono: $${Math.round(property.bono).toLocaleString()}</div>
+            `;
+            
+            // Crear contenido del modal con todos los datos
+            const modalContent = document.getElementById('modalContent');
+            let content = '<div class="property-detail-grid">';
+            
+            // Mostrar todos los datos de allData organizados
+            const sortedColumns = Object.keys(property.allData).sort();
+            sortedColumns.forEach(column => {
+                const value = property.allData[column];
+                if (value && value.toString().trim()) {
+                    let displayValue = value;
+                    
+                    // Detectar si es un enlace y convertirlo a hipervínculo
+                    const urlPattern = /(https?:\/\/[^\s]+)/g;
+                    if (urlPattern.test(value.toString())) {
+                        displayValue = value.toString().replace(urlPattern, '<a href="$1" target="_blank" class="property-link">$1 🔗</a>');
+                    }
+                    
+                    content += `
+                        <div class="property-detail-item">
+                            <div class="property-detail-label">Columna ${column}</div>
+                            <div class="property-detail-value">${displayValue}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            content += '</div>';
+            modalContent.innerHTML = content;
+            
+            // Mostrar modal
+            document.getElementById('propertyModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('propertyModal').style.display = 'none';
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('propertyModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Variables globales para filtros
+        let allProperties = [];
+        let filteredProperties = [];
+
+        // Funciones de filtrado
+        function populateFilterOptions() {
+            const ubicaciones = new Set();
+            const tipologias = new Set();
+            const bonos = [];
+            const precios = [];
+            
+            console.log('Poblando filtros con', allProperties.length, 'propiedades');
+            
+            allProperties.forEach((property, index) => {
+                // COMUNA: Solo columna D
+                const comunaValor = property.allData['D'];
+                if (comunaValor) {
+                    const texto = comunaValor.toString().trim();
+                    if (texto.length > 0) {
+                        ubicaciones.add(texto);
+                    }
+                }
+                
+                // TIPOLOGÍA: Solo columna G
+                const tipologiaValor = property.allData['G'];
+                if (tipologiaValor) {
+                    const texto = tipologiaValor.toString().trim();
+                    if (texto.length > 0) {
+                        tipologias.add(texto);
+                    }
+                }
+                
+                // Recopilar valores de bono y precio para rangos dinámicos
+                if (property.bono && property.bono > 0) {
+                    bonos.push(property.bono);
+                }
+                if (property.precio && property.precio > 0) {
+                    precios.push(property.precio);
+                }
+                
+                if (index < 3) {
+                    console.log(`${index + 1}. ${property.codigo}:`, {
+                        Comuna_D: property.allData.D,
+                        Tipologia_G: property.allData.G,
+                        Bono: property.bono,
+                        Precio: property.precio
+                    });
+                }
+            });
+            
+            console.log('Ubicaciones encontradas:', [...ubicaciones]);
+            console.log('Tipologías encontradas:', [...tipologias]);
+            console.log('Rangos de bono:', Math.min(...bonos), 'a', Math.max(...bonos));
+            console.log('Rangos de precio:', Math.min(...precios), 'a', Math.max(...precios));
+            
+            // Crear rangos dinámicos para bonos
+            createDynamicBonoRanges(bonos);
+            
+            // Crear rangos dinámicos para precios
+            createDynamicPrecioRanges(precios);
+            
+            // Llenar select de ubicaciones
+            const ubicacionSelect = document.getElementById('filterUbicacion');
+            ubicacionSelect.innerHTML = '<option value="">Todas las comunas</option>';
+            [...ubicaciones].sort().forEach(ubicacion => {
+                const option = document.createElement('option');
+                option.value = ubicacion;
+                option.textContent = ubicacion;
+                ubicacionSelect.appendChild(option);
+            });
+            
+            // Llenar select de tipologías
+            const tipologiaSelect = document.getElementById('filterTipologia');
+            tipologiaSelect.innerHTML = '<option value="">Todas las tipologías</option>';
+            [...tipologias].sort().forEach(tipologia => {
+                const option = document.createElement('option');
+                option.value = tipologia;
+                option.textContent = tipologia;
+                tipologiaSelect.appendChild(option);
+            });
+        }
+
+        function createDynamicBonoRanges(bonos) {
+            bonos.sort((a, b) => a - b);
+            const min = bonos[0];
+            const max = bonos[bonos.length - 1];
+            const count = bonos.length;
+            
+            console.log(`📊 BONOS: Min=$${min.toLocaleString()}, Max=$${max.toLocaleString()}, Count=${count}`);
+            
+            const bonoSelect = document.getElementById('filterBono');
+            bonoSelect.innerHTML = '<option value="">Cualquier bono</option>';
+            
+            // Crear 5-6 rangos basados en percentiles
+            const ranges = [];
+            const step = Math.floor(count / 5);
+            
+            for (let i = 0; i < 5; i++) {
+                const startIndex = i * step;
+                const endIndex = (i === 4) ? count - 1 : (i + 1) * step - 1;
+                const rangeMin = bonos[startIndex];
+                const rangeMax = bonos[Math.min(endIndex, count - 1)];
+                
+                if (rangeMin !== undefined && rangeMax !== undefined) {
+                    ranges.push({ min: rangeMin, max: rangeMax, count: endIndex - startIndex + 1 });
+                }
+            }
+            
+            // Agregar opciones al select
+            ranges.forEach((range, index) => {
+                const option = document.createElement('option');
+                option.value = `${range.min}-${range.max}`;
+                option.textContent = `$${range.min.toLocaleString()} - $${range.max.toLocaleString()} (${range.count})`;
+                bonoSelect.appendChild(option);
+            });
+        }
+
+        function createDynamicPrecioRanges(precios) {
+            precios.sort((a, b) => a - b);
+            const min = precios[0];
+            const max = precios[precios.length - 1];
+            const count = precios.length;
+            
+            console.log(`🏠 PRECIOS: Min=${min.toLocaleString()} UF, Max=${max.toLocaleString()} UF, Count=${count}`);
+            
+            const precioSelect = document.getElementById('filterPrecio');
+            precioSelect.innerHTML = '<option value="">Cualquier precio</option>';
+            
+            // Crear 5-6 rangos basados en percentiles
+            const ranges = [];
+            const step = Math.floor(count / 5);
+            
+            for (let i = 0; i < 5; i++) {
+                const startIndex = i * step;
+                const endIndex = (i === 4) ? count - 1 : (i + 1) * step - 1;
+                const rangeMin = Math.round(precios[startIndex]);
+                const rangeMax = Math.round(precios[Math.min(endIndex, count - 1)]);
+                
+                if (rangeMin !== undefined && rangeMax !== undefined) {
+                    ranges.push({ min: rangeMin, max: rangeMax, count: endIndex - startIndex + 1 });
+                }
+            }
+            
+            // Agregar opciones al select
+            ranges.forEach((range, index) => {
+                const option = document.createElement('option');
+                option.value = `${range.min}-${range.max}`;
+                option.textContent = `${range.min.toLocaleString()} - ${range.max.toLocaleString()} UF (${range.count})`;
+                precioSelect.appendChild(option);
+            });
+        }
+
+        // Variables para controlar el tipo de filtro
+        let isBonoManualMode = false;
+        let isPrecioManualMode = false;
+
+        function toggleBonoFilterType() {
+            isBonoManualMode = !isBonoManualMode;
+            const rangeFilter = document.getElementById('bonoRangeFilter');
+            const manualFilter = document.getElementById('bonoManualFilter');
+            const toggleBtn = document.getElementById('toggleBonoFilter');
+            
+            if (isBonoManualMode) {
+                rangeFilter.style.display = 'none';
+                manualFilter.style.display = 'block';
+                toggleBtn.textContent = '📋 Rangos';
+                toggleBtn.classList.add('active');
+                // Limpiar valores del dropdown
+                document.getElementById('filterBono').value = '';
+            } else {
+                rangeFilter.style.display = 'block';
+                manualFilter.style.display = 'none';
+                toggleBtn.textContent = '📝 Manual';
+                toggleBtn.classList.remove('active');
+                // Limpiar valores manuales
+                document.getElementById('filterBonoMin').value = '';
+                document.getElementById('filterBonoMax').value = '';
+            }
+            applyFilters();
+        }
+
+        function togglePrecioFilterType() {
+            isPrecioManualMode = !isPrecioManualMode;
+            const rangeFilter = document.getElementById('precioRangeFilter');
+            const manualFilter = document.getElementById('precioManualFilter');
+            const toggleBtn = document.getElementById('togglePrecioFilter');
+            
+            if (isPrecioManualMode) {
+                rangeFilter.style.display = 'none';
+                manualFilter.style.display = 'block';
+                toggleBtn.textContent = '📋 Rangos';
+                toggleBtn.classList.add('active');
+                // Limpiar valores del dropdown
+                document.getElementById('filterPrecio').value = '';
+            } else {
+                rangeFilter.style.display = 'block';
+                manualFilter.style.display = 'none';
+                toggleBtn.textContent = '📝 Manual';
+                toggleBtn.classList.remove('active');
+                // Limpiar valores manuales
+                document.getElementById('filterPrecioMin').value = '';
+                document.getElementById('filterPrecioMax').value = '';
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            console.clear(); // Limpiar consola para mejor lectura
+            console.log('🔄 APLICANDO FILTROS...');
+            
+            // Procesar bono según el modo activo
+            let bonoMin = 0, bonoMax = Infinity;
+            if (isBonoManualMode) {
+                // Modo manual
+                const minVal = document.getElementById('filterBonoMin').value;
+                const maxVal = document.getElementById('filterBonoMax').value;
+                bonoMin = minVal ? parseFloat(minVal.replace(/,/g, '')) : 0;
+                bonoMax = maxVal ? parseFloat(maxVal.replace(/,/g, '')) : Infinity;
+            } else {
+                // Modo rangos dinámicos
+                const bonoRango = document.getElementById('filterBono').value;
+                if (bonoRango) {
+                    const [min, max] = bonoRango.split('-').map(v => parseFloat(v));
+                    bonoMin = min;
+                    bonoMax = max;
+                }
+            }
+            
+            // Procesar precio según el modo activo
+            let precioMin = 0, precioMax = Infinity;
+            if (isPrecioManualMode) {
+                // Modo manual
+                const minVal = document.getElementById('filterPrecioMin').value;
+                const maxVal = document.getElementById('filterPrecioMax').value;
+                precioMin = minVal ? parseFloat(minVal.replace(/,/g, '')) : 0;
+                precioMax = maxVal ? parseFloat(maxVal.replace(/,/g, '')) : Infinity;
+            } else {
+                // Modo rangos dinámicos
+                const precioRango = document.getElementById('filterPrecio').value;
+                if (precioRango) {
+                    const [min, max] = precioRango.split('-').map(v => parseFloat(v));
+                    precioMin = min;
+                    precioMax = max;
+                }
+            }
+            
+            const filters = {
+                bonoMin,
+                bonoMax,
+                precioMin,
+                precioMax,
+                ubicacion: document.getElementById('filterUbicacion').value,
+                tipologia: document.getElementById('filterTipologia').value
+            };
+            
+            console.log('📋 Filtros:', filters);
+            
+            let passed = 0;
+            let failed = 0;
+            
+            // Filtrar propiedades
+            filteredProperties = allProperties.filter(property => {
+                // Convertir valores a números si son strings
+                const bono = Number(property.bono) || 0;
+                const precio = Number(property.precio) || 0;
+                
+                // Test bono
+                if (bono < filters.bonoMin || bono > filters.bonoMax) {
+                    failed++;
+                    if (failed <= 3) console.log(`❌ ${property.codigo}: bono ${bono} fuera de rango ${filters.bonoMin}-${filters.bonoMax}`);
+                    return false;
+                }
+                
+                // Test precio
+                if (precio < filters.precioMin || precio > filters.precioMax) {
+                    failed++;
+                    if (failed <= 3) console.log(`❌ ${property.codigo}: precio ${precio} UF fuera de rango ${filters.precioMin}-${filters.precioMax}`);
+                    return false;
+                }
+                
+                // Test ubicación/comuna (solo columna D)
+                if (filters.ubicacion) {
+                    const comunaValue = property.allData['D'];
+                    const ubicacionFound = comunaValue && comunaValue.toString().trim() === filters.ubicacion;
+                    
+                    if (!ubicacionFound) {
+                        failed++;
+                        if (failed <= 3) console.log(`❌ ${property.codigo}: comuna D "${comunaValue}" no coincide con "${filters.ubicacion}"`);
+                        return false;
+                    }
+                }
+                
+                // Test tipología (solo columna G)
+                if (filters.tipologia) {
+                    const tipologiaValue = property.allData['G'];
+                    const tipologiaFound = tipologiaValue && tipologiaValue.toString().trim() === filters.tipologia;
+                    
+                    if (!tipologiaFound) {
+                        failed++;
+                        if (failed <= 3) console.log(`❌ ${property.codigo}: tipología G "${tipologiaValue}" no coincide con "${filters.tipologia}"`);
+                        return false;
+                    }
+                }
+                
+                // Si pasa todos los filtros
+                passed++;
+                if (passed <= 3) console.log(`✅ ${property.codigo}: bono $${bono}, precio ${precio} UF - PASA`);
+                return true;
+            });
+            
+            // Mantener orden por columna G
+            filteredProperties.sort((a, b) => (Number(b.ordenBono) || 0) - (Number(a.ordenBono) || 0));
+            
+            console.log(`🎯 RESULTADO: ${filteredProperties.length}/${allProperties.length} propiedades`);
+            
+            // Mostrar propiedades filtradas
+            displayProperties(filteredProperties);
+            updateFilteredCount();
+        }
+
+        function clearAllFilters() {
+            // Limpiar filtros de bono
+            document.getElementById('filterBono').value = '';
+            document.getElementById('filterBonoMin').value = '';
+            document.getElementById('filterBonoMax').value = '';
+            
+            // Limpiar filtros de precio
+            document.getElementById('filterPrecio').value = '';
+            document.getElementById('filterPrecioMin').value = '';
+            document.getElementById('filterPrecioMax').value = '';
+            
+            // Limpiar otros filtros
+            document.getElementById('filterUbicacion').value = '';
+            document.getElementById('filterTipologia').value = '';
+            
+            filteredProperties = [...allProperties];
+            displayProperties(filteredProperties);
+            updateFilteredCount();
+        }
+
+        function updateFilteredCount() {
+            // Función removida - ya no mostramos el contador
+        }
+
+        function displayProperties(properties) {
+            const gridEl = document.getElementById('properties-grid');
+            gridEl.innerHTML = '';
+            
+            properties.forEach((property, index) => {
+                const card = createPropertyCard(property, index);
+                gridEl.appendChild(card);
+            });
+        }
+
+        // Agregar event listeners para filtros
+        function setupFilterListeners() {
+            // Filtros de bono (dropdown y manual)
+            document.getElementById('filterBono').addEventListener('change', applyFilters);
+            document.getElementById('filterBonoMin').addEventListener('input', applyFilters);
+            document.getElementById('filterBonoMax').addEventListener('input', applyFilters);
+            
+            // Filtros de precio (dropdown y manual)
+            document.getElementById('filterPrecio').addEventListener('change', applyFilters);
+            document.getElementById('filterPrecioMin').addEventListener('input', applyFilters);
+            document.getElementById('filterPrecioMax').addEventListener('input', applyFilters);
+            
+            // Otros filtros
+            document.getElementById('filterUbicacion').addEventListener('change', applyFilters);
+            document.getElementById('filterTipologia').addEventListener('change', applyFilters);
+        }
+
+        // Variables para modal de condiciones
+        let conditionsAccepted = localStorage.getItem('conditionsAccepted') === 'true';
+
+        // Funciones para modal de condiciones
+        async function loadCondiciones() {
+            const CONDICIONES_GID = '711460472';
+            console.log('🔄 Cargando condiciones desde Google Sheets...');
+            
+            // Intentar múltiples métodos de acceso a la hoja
+            const possibleUrls = [
+                `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${CONDICIONES_GID}`,
+                `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${CONDICIONES_GID}`,
+                `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=tsv&gid=${CONDICIONES_GID}`
+            ];
+            
+            for (let i = 0; i < possibleUrls.length; i++) {
+                try {
+                    console.log(`📡 Intentando URL ${i + 1}:`, possibleUrls[i]);
+                    const response = await fetch(possibleUrls[i]);
+                    
+                    if (!response.ok) {
+                        console.warn(`❌ URL ${i + 1} falló:`, response.status);
+                        continue;
+                    }
+                    
+                    const text = await response.text();
+                    console.log('✅ Datos recibidos, primeros 200 caracteres:', text.substring(0, 200));
+                    
+                    if (text.length < 10) {
+                        console.warn('⚠️ Respuesta muy corta, probando siguiente URL');
+                        continue;
+                    }
+                    
+                    // Procesar el contenido
+                    const lines = text.split('\n');
+                    let content = '<div class="conditions-text">';
+                    
+                    lines.forEach((line, index) => {
+                        if (line.trim()) {
+                            // Limpiar la línea de comillas y caracteres especiales
+                            let cleanLine = line.replace(/^["']|["']$/g, '').replace(/"{2}/g, '"').trim();
+                            
+                            if (cleanLine.length > 0) {
+                                // Si la línea es muy corta o parece un título
+                                if (cleanLine.length < 50 && (cleanLine.includes(':') || cleanLine.toUpperCase() === cleanLine)) {
+                                    content += `<h3>${cleanLine}</h3>`;
+                                } else {
+                                    content += `<p>${cleanLine}</p>`;
+                                }
+                            }
+                        }
+                    });
+                    
+                    content += '</div>';
+                    console.log('✅ Condiciones cargadas exitosamente desde Google Sheets');
+                    return content;
+                    
+                } catch (error) {
+                    console.warn(`❌ Error con URL ${i + 1}:`, error);
+                }
+            }
+            
+            // Si todas las URLs fallan, usar contenido de respaldo
+            console.warn('⚠️ No se pudieron cargar las condiciones desde Google Sheets, usando contenido de respaldo');
+            return `
+                <div class="conditions-text">
+                    <h3>📋 Términos y Condiciones de Uso</h3>
+                    <p><strong>TuMatch Inmobiliario</strong> es una plataforma digital que facilita la búsqueda de propiedades inmobiliarias con bonos disponibles.</p>
+                    
+                    <h3>🔍 Información de Propiedades</h3>
+                    <p>Los datos mostrados en esta plataforma son de carácter <strong>informativo</strong> y están sujetos a verificación. Las cifras de bonos, precios y características de las propiedades pueden variar y deben confirmarse directamente con los responsables del proyecto.</p>
+                    
+                    <h3>🔒 Protección de Datos</h3>
+                    <p>La información personal proporcionada será tratada de acuerdo a la <strong>Ley N° 19.628 de Protección de la Vida Privada</strong> y normativas vigentes. No compartimos datos personales con terceros sin autorización expresa.</p>
+                    
+                    <h3>⚠️ Limitación de Responsabilidad</h3>
+                    <p>TuMatch Inmobiliario actúa como <strong>intermediario informativo</strong> y no se hace responsable de:</p>
+                    <ul>
+                        <li>Decisiones de compra tomadas en base a la información aquí proporcionada</li>
+                        <li>Cambios en precios, bonos o disponibilidad de propiedades</li>
+                        <li>Variaciones en las condiciones de financiamiento</li>
+                    </ul>
+                    
+                    <h3>📞 Contacto y Verificación</h3>
+                    <p>Para consultas específicas, verificación de datos o proceso de compra, debe contactar <strong>directamente con los desarrolladores</strong> o inmobiliarias responsables de cada proyecto.</p>
+                    
+                    <h3>🔄 Actualización de Información</h3>
+                    <p>Los datos se actualizan periódicamente, pero pueden existir <strong>desfases temporales</strong>. Siempre verifique la información más reciente con las fuentes oficiales.</p>
+                    
+                    <h3>✅ Aceptación de Términos</h3>
+                    <p>Al utilizar esta plataforma, usted <strong>reconoce haber leído</strong> y acepta estos términos y condiciones. El uso continuado implica la aceptación de futuras modificaciones.</p>
+                    
+                    <p style="margin-top: 20px; font-size: 0.9rem; color: rgba(255,255,255,0.7);">
+                        <em>Última actualización: Noviembre 2024</em>
+                    </p>
+                </div>
+            `;
+        }
+
+        async function showCondicionesModal() {
+            const modal = document.getElementById('condicionesModal');
+            const content = document.getElementById('condicionesContent');
+            
+            // Mostrar modal
+            modal.style.display = 'flex';
+            
+            // Cargar contenido (intentar Google Sheets primero, luego fallback)
+            content.innerHTML = '<div class="loading-conditions"><div class="spinner"></div><p>Cargando condiciones...</p></div>';
+            
+            try {
+                const condicionesHtml = await loadCondiciones();
+                content.innerHTML = condicionesHtml;
+            } catch (error) {
+                console.error('Error cargando condiciones:', error);
+                // Usar el mismo contenido que openCondicionesOnLoad
+                content.innerHTML = `
+                    <div class="conditions-text">
+                        <h3>📋 Términos y Condiciones de Uso</h3>
+                        <p><strong>TuMatch Inmobiliario</strong> es una plataforma digital que facilita la búsqueda de propiedades inmobiliarias con bonos disponibles.</p>
+                        
+                        <h3>🔍 Información de Propiedades</h3>
+                        <p>Los datos mostrados en esta plataforma son de carácter <strong>informativo</strong> y están sujetos a verificación. Las cifras de bonos, precios y características de las propiedades pueden variar y deben confirmarse directamente con los responsables del proyecto.</p>
+                        
+                        <h3>🔒 Protección de Datos</h3>
+                        <p>La información personal proporcionada será tratada de acuerdo a la <strong>Ley N° 19.628 de Protección de la Vida Privada</strong> y normativas vigentes. No compartimos datos personales con terceros sin autorización expresa.</p>
+                        
+                        <h3>⚠️ Limitación de Responsabilidad</h3>
+                        <p>TuMatch Inmobiliario actúa como <strong>intermediario informativo</strong> y no se hace responsable de:</p>
+                        <ul>
+                            <li>Decisiones de compra tomadas en base a la información aquí proporcionada</li>
+                            <li>Cambios en precios, bonos o disponibilidad de propiedades</li>
+                            <li>Variaciones en las condiciones de financiamiento</li>
+                            <li>Disponibilidad real de bonos o subsidios</li>
+                        </ul>
+                        
+                        <h3>📞 Contacto y Verificación</h3>
+                        <p>Para consultas específicas, verificación de datos o proceso de compra, debe contactar <strong>directamente con los desarrolladores</strong> o inmobiliarias responsables de cada proyecto.</p>
+                        
+                        <h3>🏠 Responsabilidades del Usuario</h3>
+                        <p>El usuario debe:</p>
+                        <ul>
+                            <li>Verificar toda la información antes de tomar decisiones</li>
+                            <li>Consultar directamente con las inmobiliarias</li>
+                            <li>Realizar las gestiones legales correspondientes</li>
+                            <li>Confirmar disponibilidad de bonos y subsidios</li>
+                        </ul>
+                        
+                        <h3>🔄 Actualización de Información</h3>
+                        <p>Los datos se actualizan periódicamente, pero pueden existir <strong>desfases temporales</strong>. Siempre verifique la información más reciente con las fuentes oficiales.</p>
+                        
+                        <h3>⚖️ Jurisdicción</h3>
+                        <p>Estos términos se rigen por las leyes chilenas. Cualquier disputa será resuelta en los tribunales competentes de Santiago, Chile.</p>
+                        
+                        <h3>✅ Aceptación de Términos</h3>
+                        <p>Al utilizar esta plataforma, usted <strong>reconoce haber leído</strong> y acepta estos términos y condiciones. El uso continuado implica la aceptación de futuras modificaciones.</p>
+                        
+                        <p style="margin-top: 30px; padding: 15px; background: rgba(255,107,107,0.1); border-radius: 8px; font-size: 0.9rem; color: rgba(255,255,255,0.8);">
+                            <strong>📢 Importante:</strong> Esta plataforma es exclusivamente informativa. Para decisiones de inversión o compra, siempre consulte con profesionales del sector inmobiliario.
+                        </p>
+                        
+                        <p style="margin-top: 20px; font-size: 0.85rem; color: rgba(255,255,255,0.6); text-align: center;">
+                            <em>Última actualización: Noviembre 2024</em>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function closeCondicionesModal() {
+            document.getElementById('condicionesModal').style.display = 'none';
+        }
+
+        async function openCondicionesOnLoad() {
+            const modal = document.getElementById('condicionesModal');
+            const content = document.getElementById('condicionesContent');
+            
+            // Mostrar modal
+            modal.style.display = 'flex';
+            
+            // Cargar las condiciones reales desde la imagen que me mostraste
+            content.innerHTML = `
+                <div class="conditions-text">
+                    <p><strong>Según lo conversado en la reunión, estas serían las condiciones para trabajar como broker externo de venta en Assetplan:</strong></p>
+                    
+                    <div class="condition-item">
+                        <strong>1.</strong> Todo cliente que quiera realizar una visita, debe tener por lo menos un crédito pre-aprobado. En caso de querer avanzar con una eventual promesa, el crédito ya debe estar aprobado por el banco.
+                    </div>
+                    
+                    <div class="condition-item">
+                        <strong>2.</strong> Si algún cliente quiere reservar una unidad, es obligatoria una visita previa. No se firmarán promesas sin visita realizada.
+                    </div>
+                    
+                    <div class="condition-item">
+                        <strong>3.</strong> La visita es responsabilidad de ustedes coordinar con el arrendatario. Nosotros haremos el nexo con él para que ustedes tomen contacto y coordinen.
+                    </div>
+                    
+                    <div class="condition-item">
+                        <strong>4.</strong> La comunicación con su cliente es de responsabilidad de ustedes. Si bien nosotros hacemos toda la gestión desde la firma de la promesa, el cliente es suyo y deben hacerse cargo de él y cualquier problema que tenga.
+                    </div>
+                    
+                    <div class="condition-item">
+                        <strong>5.</strong> Si bien el seguimiento de la operación es responsabilidad de assetplan se espera que puedan apoyar en solicitudes puntuales que respecten a su cliente para con su banco, tales como; solicitud de informes de tasación, solicitud de borradores de escritura, solicitudes de envío de liquidaciones de desembolso, entre otros documentos.
+                    </div>
+                    
+                    <div class="condition-item">
+                        <strong>6.</strong> Si la la compra de la propiedad es para vivienda se debe indicar en el correo donde se formaliza la reserva para poder gestionar la salida de los arrendatarios.
+                    </div>
+                </div>
+            `;
+        }
+
+        function acceptConditions() {
+            conditionsAccepted = true;
+            localStorage.setItem('conditionsAccepted', 'true');
+            closeCondicionesModal();
+            
+            // Mostrar botón flotante
+            document.getElementById('condicionesBtn').style.display = 'block';
+        }
+
+        // Cerrar modal al hacer clic fuera (solo para el modal de propiedades)
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('propertyModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Cargar propiedades al iniciar
+        loadProperties();
+
+        // Mostrar condiciones si no han sido aceptadas
+        window.addEventListener('load', function() {
+            if (!conditionsAccepted) {
+                setTimeout(() => {
+                    openCondicionesOnLoad();
+                }, 1000); // Esperar 1 segundo después de cargar
+            } else {
+                // Si ya fueron aceptadas, mostrar botón flotante
+                document.getElementById('condicionesBtn').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
