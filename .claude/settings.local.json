@@ -6,7 +6,11 @@
       "WebFetch(domain:docs.google.com)",
       "WebFetch(domain:doc-04-18-sheets.googleusercontent.com)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Assetplan property listing web application\n\n- Main web application with property filters and Google Sheets integration\n- Dynamic filters for comuna (column D) and tipología (column G)\n- Smart price/bono range filters with manual input toggle\n- Conditions modal with Assetplan broker terms\n- Responsive design with glassmorphism effects\n- Auto-hyperlinked URLs in property details\n- Next.js version included for future development\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
