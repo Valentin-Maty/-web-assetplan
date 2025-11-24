@@ -1744,8 +1744,8 @@
                 }
                 
                 // Recopilar valores de bono y precio para rangos dinámicos
-                if (property.bono != null && property.bono >= 0) {
-                    bonos.push(property.bono);
+                if (property.bono != null && property.bono > 0) {
+                    bonos.push(property.bono); // Solo bonos > 0 para rangos
                 }
                 if (property.precio != null && property.precio >= 0) {
                     precios.push(property.precio);
@@ -1794,38 +1794,57 @@
         }
 
         function createDynamicBonoRanges(bonos) {
-            bonos.sort((a, b) => a - b);
-            const min = bonos[0];
-            const max = bonos[bonos.length - 1];
-            const count = bonos.length;
-            
-            console.log(`📊 BONOS: Min=$${min.toLocaleString()}, Max=$${max.toLocaleString()}, Count=${count}`);
+            // Filtrar solo bonos > 0 y ordenar
+            const bonosPositivos = bonos.filter(b => b > 0).sort((a, b) => a - b);
             
             const bonoSelect = document.getElementById('filterBono');
             bonoSelect.innerHTML = '<option value="">Cualquier bono</option>';
             
-            // Crear 5-6 rangos basados en percentiles
-            const ranges = [];
-            const step = Math.floor(count / 5);
+            // Agregar opción para "Sin bono" (bono = 0)
+            const sinBonoOption = document.createElement('option');
+            sinBonoOption.value = '0-0';
+            sinBonoOption.textContent = 'Sin bono';
+            bonoSelect.appendChild(sinBonoOption);
             
-            for (let i = 0; i < 5; i++) {
+            if (bonosPositivos.length === 0) {
+                console.log('⚠️ No hay bonos > 0 para crear rangos');
+                return;
+            }
+            
+            const min = bonosPositivos[0];
+            const max = bonosPositivos[bonosPositivos.length - 1];
+            const count = bonosPositivos.length;
+            
+            console.log(`📊 BONOS POSITIVOS: Min=$${min.toLocaleString()}, Max=$${max.toLocaleString()}, Count=${count}`);
+            
+            // Crear 4-5 rangos basados en percentiles
+            const ranges = [];
+            const step = Math.floor(count / 4);
+            
+            for (let i = 0; i < 4; i++) {
                 const startIndex = i * step;
-                const endIndex = (i === 4) ? count - 1 : (i + 1) * step - 1;
-                const rangeMin = bonos[startIndex];
-                const rangeMax = bonos[Math.min(endIndex, count - 1)];
+                const endIndex = (i === 3) ? count - 1 : (i + 1) * step - 1;
+                const rangeMin = bonosPositivos[startIndex];
+                const rangeMax = bonosPositivos[Math.min(endIndex, count - 1)];
                 
                 if (rangeMin !== undefined && rangeMax !== undefined) {
                     ranges.push({ min: rangeMin, max: rangeMax, count: endIndex - startIndex + 1 });
                 }
             }
             
-            // Agregar opciones al select
+            // Agregar opciones de rangos al select
             ranges.forEach((range, index) => {
                 const option = document.createElement('option');
                 option.value = `${range.min}-${range.max}`;
-                option.textContent = `$${range.min.toLocaleString()} - $${range.max.toLocaleString()} (${range.count})`;
+                if (range.min === range.max) {
+                    option.textContent = `$${range.min.toLocaleString()}`;
+                } else {
+                    option.textContent = `$${range.min.toLocaleString()} - $${range.max.toLocaleString()} (${range.count})`;
+                }
                 bonoSelect.appendChild(option);
             });
+            
+            console.log('📊 Rangos de bono creados:', ranges);
         }
 
         function createDynamicPrecioRanges(precios) {
@@ -1936,6 +1955,12 @@
                     const [min, max] = bonoRango.split('-').map(v => parseFloat(v));
                     bonoMin = min;
                     bonoMax = max;
+                    
+                    // Caso especial para "Sin bono" (0-0)
+                    if (min === 0 && max === 0) {
+                        bonoMin = 0;
+                        bonoMax = 0;
+                    }
                 }
             }
             
@@ -1978,7 +2003,14 @@
                 const precio = Number(property.precio) || 0;
                 
                 // Test bono
-                if (bono < filters.bonoMin || bono > filters.bonoMax) {
+                if (filters.bonoMin === 0 && filters.bonoMax === 0) {
+                    // Caso especial: filtrar solo "Sin bono" (bono = 0)
+                    if (bono !== 0) {
+                        failed++;
+                        if (failed <= 3) console.log(`❌ ${property.codigo}: bono ${bono} no es "Sin bono"`);
+                        return false;
+                    }
+                } else if (bono < filters.bonoMin || bono > filters.bonoMax) {
                     failed++;
                     if (failed <= 3) console.log(`❌ ${property.codigo}: bono ${bono} fuera de rango ${filters.bonoMin}-${filters.bonoMax}`);
                     return false;
