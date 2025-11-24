@@ -2122,89 +2122,70 @@
             const CONDICIONES_GID = '711460472';
             console.log('🔄 Cargando condiciones desde Google Sheets GID 711460472...');
             
-            // URLs específicas para el GID de condiciones
-            const possibleUrls = [
-                `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${CONDICIONES_GID}`,
-                `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${CONDICIONES_GID}`,
-                `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=tsv&gid=${CONDICIONES_GID}`,
-                // Alternativas con nombre de hoja
-                `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&sheet=Condiciones`,
-                `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Condiciones`
-            ];
+            // URL principal que sabemos que funciona
+            const condicionesUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${CONDICIONES_GID}`;
             
-            for (let i = 0; i < possibleUrls.length; i++) {
-                try {
-                    console.log(`📡 Intentando cargar condiciones - URL ${i + 1}:`, possibleUrls[i]);
+            try {
+                console.log(`📡 Cargando condiciones desde: ${condicionesUrl}`);
                     
-                    const response = await fetch(possibleUrls[i], {
+                const response = await fetch(condicionesUrl, {
                         method: 'GET',
                         headers: {
                             'Accept': 'text/csv,text/plain,*/*',
                         },
-                    });
-                    
-                    if (!response.ok) {
-                        console.warn(`❌ URL ${i + 1} falló con status ${response.status}: ${response.statusText}`);
-                        continue;
-                    }
-                    
-                    const text = await response.text();
-                    console.log(`✅ Datos recibidos desde URL ${i + 1}, longitud:`, text.length);
-                    console.log('📝 Primeros 300 caracteres:', text.substring(0, 300));
-                    
-                    if (text.length < 20) {
-                        console.warn('⚠️ Respuesta muy corta, probando siguiente URL');
-                        continue;
-                    }
-                    
-                    // Procesar el contenido CSV
-                    const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
-                    console.log(`📋 Procesando ${lines.length} líneas de condiciones`);
-                    
-                    if (lines.length === 0) {
-                        console.warn('❌ No se encontraron líneas válidas');
-                        continue;
-                    }
-                    
-                    let content = '<div class="conditions-text">';
-                    
-                    lines.forEach((line, index) => {
-                        // Limpiar la línea de comillas CSV y caracteres especiales
-                        let cleanLine = line.replace(/^"/, '').replace(/"$/, '').replace(/""/g, '"').trim();
-                        
-                        if (cleanLine.length > 0) {
-                            console.log(`📄 Procesando línea ${index + 1}: ${cleanLine.substring(0, 100)}...`);
-                            
-                            // Detectar diferentes tipos de contenido
-                            if (index === 0 && cleanLine.toLowerCase().includes('condicion')) {
-                                // Primera línea que parece ser título general
-                                content += `<p><strong>${cleanLine}</strong></p>`;
-                            } else if (cleanLine.match(/^\d+[\.\)\:]/) || cleanLine.toLowerCase().startsWith('condición')) {
-                                // Líneas numeradas o que empiecen con "Condición"
-                                content += `<div class="condition-item"><strong>${cleanLine}</strong></div>`;
-                            } else if (cleanLine.length > 30) {
-                                // Contenido descriptivo largo
-                                content += `<div class="condition-item">${cleanLine}</div>`;
-                            } else if (cleanLine.includes(':') && cleanLine.length < 100) {
-                                // Títulos cortos con dos puntos
-                                content += `<p><strong>${cleanLine}</strong></p>`;
-                            } else {
-                                // Contenido general
-                                content += `<p>${cleanLine}</p>`;
-                            }
-                        }
-                    });
-                    
-                    content += '</div>';
-                    console.log('✅ Condiciones cargadas y procesadas exitosamente desde Google Sheets');
-                    return content;
-                    
-                } catch (error) {
-                    console.warn(`❌ Error con URL ${i + 1}:`, error);
+                });
+                
+                console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                
+                const text = await response.text();
+                console.log(`✅ Condiciones cargadas exitosamente. Longitud: ${text.length} caracteres`);
+                console.log('📄 Contenido recibido:', text.substring(0, 300));
+                
+                if (text.length < 10) {
+                    throw new Error('Respuesta muy corta o vacía');
+                }
+                
+                // Procesar el contenido CSV
+                const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+                console.log(`📋 Procesando ${lines.length} líneas de condiciones`);
+                
+                if (lines.length === 0) {
+                    throw new Error('No se encontraron líneas válidas en la respuesta');
+                }
+                
+                let content = '<div class="conditions-text">';
+                
+                // Agregar título introductorio
+                content += `<p><strong>Condiciones para trabajar como broker externo de venta en Assetplan:</strong></p>`;
+                
+                lines.forEach((line, index) => {
+                    // Limpiar la línea de comillas CSV y caracteres especiales
+                    let cleanLine = line.replace(/^"/, '').replace(/"$/, '').replace(/""/g, '"').trim();
+                    
+                    if (cleanLine.length > 0) {
+                        console.log(`📄 Línea ${index + 1}: ${cleanLine}`);
+                        
+                        // Formatear cada línea como una condición numerada
+                        content += `<div class="condition-item">`;
+                        content += `<strong>${index + 1}.</strong> ${cleanLine}`;
+                        content += `</div>`;
+                    }
+                });
+                
+                content += '</div>';
+                console.log('✅ Condiciones procesadas exitosamente desde Google Sheets');
+                return content;
+                
+            } catch (error) {
+                console.error('❌ Error cargando condiciones desde Google Sheets:', error);
+                throw error; // Re-lanzar para que se use el fallback
             }
             
-            // Si todas las URLs fallan, usar contenido de respaldo
+            // NOTA: Esta línea nunca debería ejecutarse, pero por seguridad:
             console.warn('⚠️ No se pudieron cargar las condiciones desde Google Sheets, usando contenido de respaldo');
             return `
                 <div class="conditions-text">
