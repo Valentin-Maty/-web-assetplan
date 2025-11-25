@@ -602,7 +602,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
             text-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);
             padding: 15px;
             border: 2px solid #FFD700;
@@ -2037,6 +2037,7 @@
                     
                     <div class="property-label">BONO DISPONIBLE</div>
                     <div class="property-bono-large">${(property.bono && property.bono > 0) ? '$' + Math.round(property.bono).toLocaleString() : 'Sin bono'}</div>
+                    ${(property.bono && property.bono > 0) ? '<div style="font-size: 0.7rem; color: rgba(255,215,0,0.7); margin: 0 10px 15px 10px; line-height: 1.3; font-style: italic; text-align: center;">*Bono sujeto a confirmación previa visita a propiedad</div>' : '<div style="margin-bottom: 15px;"></div>'}
                     
                     <button class="btn-details-large" onclick="showPropertyDetails('${property.id}')">
                         Ver Detalles
@@ -2095,6 +2096,7 @@
             document.getElementById('modalSubtitle').innerHTML = `
                 <div style="font-size: 1.5rem; margin-bottom: 10px;">${Math.round(property.precio || 0).toLocaleString()} UF</div>
                 <div style="color: #FFD700;">Bono: ${(property.bono && property.bono > 0) ? '$' + Math.round(property.bono).toLocaleString() : 'Sin bono'}</div>
+                ${(property.bono && property.bono > 0) ? '<div style="font-size: 0.75rem; color: rgba(255,215,0,0.6); margin-top: 5px; font-style: italic;">*Bono sujeto a confirmación previa visita a propiedad</div>' : ''}
             `;
             
             // Crear contenido del modal solo con las columnas solicitadas
