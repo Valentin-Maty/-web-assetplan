@@ -1925,6 +1925,12 @@
                     // Usar el precio de la hoja Bonos (columna B)
                     const precioFinal = bonoInfo.precio || 0;
                     
+                    // Filtrar propiedades con precio 0 UF
+                    if (precioFinal <= 0) {
+                        console.log(`⏭️ Propiedad ${codigo} excluida: precio 0 UF`);
+                        continue; // Saltar esta propiedad
+                    }
+                    
                     const property = {
                         id: codigo,
                         codigo: codigo,
