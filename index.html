@@ -747,6 +747,29 @@
             box-shadow: 0 2px 8px rgba(79, 195, 247, 0.3);
         }
 
+        .fixed-conditions-btn {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.9), rgba(123, 97, 255, 0.9));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px auto 30px;
+            display: block;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        .fixed-conditions-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+            background: linear-gradient(135deg, rgba(255, 107, 107, 1), rgba(123, 97, 255, 1));
+        }
+
         .filters-container {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
             backdrop-filter: blur(25px);
@@ -1447,39 +1470,6 @@
             transform: translateY(-1px);
         }
 
-        .floating-conditions-btn {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            background: linear-gradient(135deg, rgba(30, 30, 50, 0.95) 0%, rgba(40, 40, 60, 0.95) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            color: white;
-            padding: 12px 18px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(20px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            max-width: 200px;
-        }
-
-        .floating-conditions-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
-            background: linear-gradient(135deg, rgba(40, 40, 60, 0.95) 0%, rgba(50, 50, 70, 0.95) 100%);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        .floating-conditions-btn::before {
-            content: "📋";
-            font-size: 1rem;
-        }
 
         @media (max-width: 768px) {
             .properties-grid {
@@ -1518,13 +1508,6 @@
                 padding: 18px;
             }
 
-            .floating-conditions-btn {
-                bottom: 20px;
-                left: 20px;
-                padding: 10px 15px;
-                font-size: 0.8rem;
-                max-width: 160px;
-            }
         }
     </style>
 </head>
@@ -1568,6 +1551,11 @@
             </div>
 
             <div id="content" style="display: none;">
+
+                <!-- Botón de condiciones fijo -->
+                <button id="condicionesBtn" class="fixed-conditions-btn" onclick="showCondicionesModal()">
+                    📋 Ver Términos y Condiciones
+                </button>
 
                 <!-- Filtros Mejorados -->
                 <div class="filters-container">
@@ -1682,10 +1670,6 @@
                 </div>
             </div>
 
-            <!-- Botón flotante para ver condiciones -->
-            <button id="condicionesBtn" class="floating-conditions-btn" onclick="showCondicionesModal()" style="display: none;">
-                Ver Condiciones
-            </button>
         </main>
     </div>
 
@@ -1974,6 +1958,9 @@
                 populateFilterOptions();
                 setupFilterListeners();
                 
+                // Procesar rentabilidades faltantes ANTES de mostrar
+                procesarRentabilidadesFaltantes();
+                
                 // Mostrar propiedades
                 displayProperties(filteredProperties);
                 
@@ -2100,64 +2087,122 @@
         
         // Función para calcular rentabilidad automáticamente
         function calcularRentabilidadAutomatica(property) {
-            // Obtener arriendo bruto anual (columna AI)
-            const arriendoBrutoAnual = property.allData?.AI;
-            // Obtener precio final del departamento (columna AE) o usar el precio de la propiedad
-            const precioFinalUF = property.allData?.AE || property.precio;
-            // También intentar con Canon de Arriendo (columna S) si no hay AI
-            const canonArriendo = property.allData?.S;
-            
-            console.log('Calculando rentabilidad para:', property.codigo);
-            console.log('Arriendo Bruto Anual (AI):', arriendoBrutoAnual);
-            console.log('Canon Arriendo (S):', canonArriendo);
-            console.log('Precio Final UF (AE):', precioFinalUF);
-            console.log('Precio propiedad:', property.precio);
-            
-            // Usar arriendo bruto anual o canon de arriendo * 12
-            let arriendoAnual = arriendoBrutoAnual;
-            if (!arriendoAnual && canonArriendo) {
-                // Si solo tenemos canon mensual, multiplicar por 12
-                const canonMensual = parseFloat(canonArriendo.toString().replace(/[\$,\\.]/g, ''));
-                if (!isNaN(canonMensual)) {
-                    arriendoAnual = canonMensual * 12;
-                    console.log('Usando canon mensual x12:', arriendoAnual);
+            try {
+                // Debug específico para propiedad 44878
+                const esPropiedad44878 = property.codigo === '44878';
+                
+                // 1. Obtener datos de arriendo (múltiples fuentes)
+                const arriendoBrutoAnual = property.allData?.AI;
+                const canonArriendo = property.allData?.S; // Canon mensual
+                
+                // 2. Obtener precio de la propiedad (múltiples fuentes)
+                const precioFinalUF = property.allData?.AE || property.precio;
+                
+                if (esPropiedad44878) {
+                    console.log('🔍 Analizando propiedad 44878:');
+                    console.log('  - Arriendo Bruto Anual (AI):', arriendoBrutoAnual);
+                    console.log('  - Canon Arriendo (S):', canonArriendo);
+                    console.log('  - Precio Final UF (AE):', property.allData?.AE);
+                    console.log('  - Precio propiedad:', property.precio);
+                    console.log('  - Precio usado:', precioFinalUF);
+                    console.log('  - Rentabilidad existente (AJ):', property.allData?.AJ);
+                    console.log('  - Todos los datos:', property.allData);
                 }
-            }
-            
-            if (!arriendoAnual || !precioFinalUF) {
-                console.log('Faltan datos para calcular rentabilidad');
+                
+                // 3. Calcular arriendo anual
+                let arriendoAnual = null;
+                
+                // Prioridad 1: Arriendo bruto anual (AI)
+                if (arriendoBrutoAnual && arriendoBrutoAnual.toString().trim() !== '') {
+                    const arriendoStr = arriendoBrutoAnual.toString().replace(/[\$,\\.]/g, '');
+                    arriendoAnual = parseFloat(arriendoStr);
+                    if (esPropiedad44878) console.log('  - Arriendo de AI procesado:', arriendoAnual);
+                }
+                
+                // Prioridad 2: Canon de arriendo mensual x 12 (S)
+                if (!arriendoAnual && canonArriendo && canonArriendo.toString().trim() !== '') {
+                    const canonStr = canonArriendo.toString().replace(/[\$,\\.]/g, '');
+                    const canonMensual = parseFloat(canonStr);
+                    if (!isNaN(canonMensual) && canonMensual > 0) {
+                        arriendoAnual = canonMensual * 12;
+                        if (esPropiedad44878) console.log('  - Canon mensual x12:', canonMensual, 'x12 =', arriendoAnual);
+                    }
+                }
+                
+                // 4. Validar datos mínimos
+                if (!arriendoAnual || !precioFinalUF || arriendoAnual <= 0) {
+                    if (esPropiedad44878) console.log('  - ❌ Faltan datos:', {arriendoAnual, precioFinalUF});
+                    return null;
+                }
+                
+                // 5. Procesar precio UF
+                const precioStr = precioFinalUF.toString().replace(/[\.,]/g, '');
+                const precioNumerico = parseFloat(precioStr);
+                
+                if (isNaN(precioNumerico) || precioNumerico <= 0) {
+                    if (esPropiedad44878) console.log('  - ❌ Precio inválido:', precioNumerico);
+                    return null;
+                }
+                
+                // 6. Convertir precio UF a CLP
+                const precioEnCLP = precioNumerico * valorUF;
+                
+                // 7. Calcular rentabilidad
+                const rentabilidad = (arriendoAnual / precioEnCLP) * 100;
+                
+                if (esPropiedad44878) {
+                    console.log('  - Cálculo final:');
+                    console.log('    * Arriendo anual:', arriendoAnual);
+                    console.log('    * Precio UF:', precioNumerico);
+                    console.log('    * Valor UF:', valorUF);
+                    console.log('    * Precio CLP:', precioEnCLP);
+                    console.log('    * Rentabilidad:', rentabilidad.toFixed(2) + '%');
+                }
+                
+                // 8. Validar resultado (entre 0.1% y 25% es realista)
+                if (rentabilidad >= 0.1 && rentabilidad <= 25) {
+                    const resultado = `${rentabilidad.toFixed(1)}%`;
+                    if (esPropiedad44878) console.log('  - ✅ Resultado:', resultado);
+                    return resultado;
+                }
+                
+                if (esPropiedad44878) console.log('  - ❌ Rentabilidad fuera de rango:', rentabilidad);
+                return null;
+                
+            } catch (error) {
+                if (property.codigo === '44878') console.log('  - ❌ Error:', error);
                 return null;
             }
+        }
+        
+        // Función para detectar y procesar propiedades sin rentabilidad
+        function procesarRentabilidadesFaltantes() {
+            let propiedadesProcesadas = 0;
+            let rentabilidadesCalculadas = 0;
             
-            // Convertir arriendo a número (remover $ y , si los tiene)
-            const arriendoNumerico = typeof arriendoAnual === 'number' ? arriendoAnual : parseFloat(arriendoAnual.toString().replace(/[\$,\\.]/g, ''));
-            // Convertir precio UF a número
-            const precioNumerico = parseFloat(precioFinalUF.toString().replace(/[\.,]/g, ''));
+            allProperties.forEach(property => {
+                propiedadesProcesadas++;
+                
+                // Solo calcular si no tiene rentabilidad existente
+                const rentabilidadExistente = property.allData?.AJ;
+                if (!rentabilidadExistente || rentabilidadExistente.toString().trim() === '') {
+                    const rentabilidadCalculada = calcularRentabilidadAutomatica(property);
+                    
+                    if (rentabilidadCalculada) {
+                        // Asignar la rentabilidad calculada a la propiedad
+                        property.allData.AJ = rentabilidadCalculada;
+                        rentabilidadesCalculadas++;
+                    }
+                }
+            });
             
-            console.log('Arriendo numérico:', arriendoNumerico);
-            console.log('Precio numérico UF:', precioNumerico);
+            // Log de resumen (solo este)
+            console.log(`📊 Rentabilidades calculadas: ${rentabilidadesCalculadas} de ${propiedadesProcesadas} propiedades`);
             
-            if (isNaN(arriendoNumerico) || isNaN(precioNumerico) || precioNumerico === 0) {
-                console.log('Valores no válidos para cálculo');
-                return null;
+            // Actualizar la visualización si hay propiedades mostradas
+            if (filteredProperties.length > 0) {
+                displayProperties(filteredProperties);
             }
-            
-            // Convertir precio UF a CLP para el cálculo
-            const precioEnCLP = precioNumerico * valorUF;
-            console.log('Precio en CLP:', precioEnCLP);
-            
-            // Calcular rentabilidad: (Arriendo Anual / Precio) * 100
-            const rentabilidad = (arriendoNumerico / precioEnCLP) * 100;
-            console.log('Rentabilidad calculada:', rentabilidad);
-            
-            if (rentabilidad > 0 && rentabilidad < 50) { // Filtro de seguridad
-                const resultado = `${rentabilidad.toFixed(1)}%`;
-                console.log('Rentabilidad final:', resultado);
-                return resultado;
-            }
-            
-            console.log('Rentabilidad fuera de rango válido');
-            return null;
         }
         
         // Función para determinar el nivel de rentabilidad
@@ -2975,8 +3020,6 @@
             localStorage.setItem('conditionsAccepted', 'true');
             closeCondicionesModal();
             
-            // Mostrar botón flotante
-            document.getElementById('condicionesBtn').style.display = 'block';
         }
 
         // Cerrar modal al hacer clic fuera (solo para el modal de propiedades)
@@ -3000,8 +3043,6 @@
                     openCondicionesOnLoad();
                 }, 1000); // Esperar 1 segundo después de cargar
             } else {
-                // Si ya fueron aceptadas, mostrar botón flotante
-                document.getElementById('condicionesBtn').style.display = 'block';
             }
             
             // Crear partículas dinámicas
